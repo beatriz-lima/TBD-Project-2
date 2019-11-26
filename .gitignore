@@ -1,0 +1,4 @@
+*.pyc
+volumes/*
+.vscode/*
+.DS_Store
