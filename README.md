@@ -8,8 +8,8 @@ Node type || Associated Attributes:
 - Playlist || uniqueID ; name
 - user || uniqueID ; name (Uma vez que faz aqui faz mais sentido alguem ser dono de uma playlist. Gerar uses falsos.)
 
-Relations:
-- Participation (Artist-Band) (With possible exitCount, have another relation)
+Relations || Attributes:
+- Participation (Artist-Band) (With possible exitCount, have another relation) || nTimes ; activeIn
 - Produces (Band-Album)
 - ofGenre (Album-Genre)
 - hasAlbum (Playlist-Album)
