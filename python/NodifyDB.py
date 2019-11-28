@@ -1,5 +1,3 @@
-import pandas as pd
-
 def createNode(kind, KIA, constitution = None, essence = None, oneInstance = False):
     '''
     Requires:
@@ -48,9 +46,19 @@ def createLinkage(kiaNodeA, kiaNodeB, verb, attributes = None, meaning = None, o
     else:
         return(create + nodeA + f'[:{verb}]' + nodeB)
 
+
 #Test queries
 #print(createNode("Human", "Human1", ["name","age"],["Joseph",44]))
-#print(createNode("House", "House1", ["name"], ["Stallosholmet"]))
+#print(createNode("House", "House1", ["name"], ["Staholmet"]))
 #print(createNode("HouseDivison", "Kitchen"))
-#print(createLinkage("Human1", "House1", "lives"))
+#print(createLinkage("Human1", "House1", "livesIn"))
 #print(createLinkage("House1", "Kitchen", "has", ["since"], ["built, in 1967"]))
+#Se quiserem testar, 
+'''
+CREATE (Human1:Human {name: "Joseph", age: "44"}),
+(House1:House {name: "Staholmet"}),
+(Kitchen:HouseDivison),
+(Human1)-[:livesIn]->(House1),
+(House1)-[:has {since: "built, in 1967"}]->(Kitchen)
+'''
+
