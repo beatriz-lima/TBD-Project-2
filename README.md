@@ -1,12 +1,12 @@
 The goal of this project is to showcase the different capabilities of a NoSQL database vs Relational database. For that we designed a graph database on Neo4J and implemented two complex operations.
 
-Node type || Associated Attributes:
-- Artist || name ; dbpedia
-- Band || name ; dbpedia
-- Album || name ; dbpedia
-- Genre || name
-- Playlist || uniqueID ; name
-- user || uniqueID ; name (Uma vez que faz aqui faz mais sentido alguem ser dono de uma playlist. Gerar uses falsos.)
+Node type   || Associated Attributes:
+- Artist    || name ; dbpedia
+- Band      || name ; dbpedia ; yearStart ; yearEnd
+- Album     || name ; dbpedia ; sold ; duration ; abstract
+- Genre     || name
+- Playlist  || uniqueID ; name
+- user      || uniqueID ; name (Uma vez que faz aqui faz mais sentido alguem ser dono de uma playlist. Gerar uses falsos.)
 
 Relations || Attributes:
 - Participation (Artist-Band) (With possible exitCount, have another relation) || nTimes ; activeIn
