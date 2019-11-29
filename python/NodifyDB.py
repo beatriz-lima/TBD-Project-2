@@ -1,4 +1,4 @@
-def createNode(kind, KIA, constitution = None, essence = None, oneInstance = False):
+def createNode(kind, KIA, constitution=None, essence=None, oneInstance=False):
     '''
     Requires:
         kind : Node shape (Natively supports: Band;Artist;Album;Genre)
@@ -8,20 +8,17 @@ def createNode(kind, KIA, constitution = None, essence = None, oneInstance = Fal
         oneInstance : | False if this is a line in query with more entries
                       | True if this is a single line to be inserted
     '''
-    if oneInstance == True:
-        create = "CREATE "
-    else:
-        create = ""
-    
-    if (constitution != None and essence != None and (len(constitution) == len(essence))):
+    create = "CREATE " if oneInstance else ""
+
+    if constitution is not None and essence is not None and (len(constitution) == len(essence)):
         thisNode = f'({KIA}:{kind}' + " {"
         builder = ', '.join([f'{constitution[i]}: "{essence[i]}"' for i in range(0, len(constitution))])
-        return(create + thisNode + builder + '})')
+        return create + thisNode + builder + '})'
     else:
-        return(create + f'({KIA}:{kind})')
+        return create + f'({KIA}:{kind})'
 
 
-def createLinkage(kiaNodeA, kiaNodeB, verb, attributes = None, meaning = None, oneInstance = False):
+def createLinkage(kiaNodeA, kiaNodeB, verb, attributes=None, meaning=None, oneInstance=False):
     '''
     Requires:
         kiaNodeA / kiaNodeB : Key Identification Accessor of nodes A and B.
@@ -34,17 +31,14 @@ def createLinkage(kiaNodeA, kiaNodeB, verb, attributes = None, meaning = None, o
     nodeA = f'({kiaNodeA})-'
     nodeB = f'->({kiaNodeB})'
 
-    if oneInstance == True:
-        create = "CREATE "
-    else:
-        create = ""
-    
-    if (attributes != None and meaning != None and (len(attributes) == len(meaning))):
+    create = "CREATE " if oneInstance else ""
+
+    if attributes is not None and meaning is not None and (len(attributes) == len(meaning)):
         theVerbA = f'[:{verb}'
         builder = ', '.join([f'{attributes[i]}: "{meaning[i]}"' for i in range(0, len(attributes))])
-        return(create + nodeA + theVerbA + ' {' + builder + '}]' + nodeB)
+        return create + nodeA + theVerbA + ' {' + builder + '}]' + nodeB
     else:
-        return(create + nodeA + f'[:{verb}]' + nodeB)
+        return create + nodeA + f'[:{verb}]' + nodeB
 
 
 #Test queries
@@ -53,7 +47,7 @@ def createLinkage(kiaNodeA, kiaNodeB, verb, attributes = None, meaning = None, o
 #print(createNode("HouseDivison", "Kitchen"))
 #print(createLinkage("Human1", "House1", "livesIn"))
 #print(createLinkage("House1", "Kitchen", "has", ["since"], ["built, in 1967"]))
-#Se quiserem testar, 
+#Se quiserem testar,
 '''
 CREATE (Human1:Human {name: "Joseph", age: "44"}),
 (House1:House {name: "Staholmet"}),

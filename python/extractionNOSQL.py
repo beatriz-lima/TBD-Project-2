@@ -86,7 +86,7 @@ def process_albums(data_dir):
     _fix_sales = lambda x: list(map(fix_sales, x))
     albums_df["sold_array"] = albums_df["sold_array"].apply(_fix_sales)
 
-    
+
     albums_df.columns = ['dbpedia','bandID','name','release', 'duration', 'sold', 'abstract']
     albums_df = albums_df[["name", "dbpedia", "sold", "duration", "abstract"]]
 
@@ -158,8 +158,8 @@ def process_artistparticipation(data_dir):
     )
     artists_former = pd.read_csv(os.path.join(data_dir, 'band-former_member-member_name.csv'))
     artists_current = pd.read_csv(os.path.join(data_dir, 'band-member-member_name.csv'))
-    
-    
+
+
     #Former count
     artists_former['exitCount'] = 1
     former = artists_former.groupby(['artist','band']).exitCount.count().reset_index()
@@ -169,11 +169,11 @@ def process_artistparticipation(data_dir):
     artists_current['exitCount'] = 1
     current = artists_current.groupby(['artist','band']).exitCount.count().reset_index()
     current['isActive'] = 1
-    
+
     artists_new = pd.merge(former, current, \
                            on = ['band','artist'], \
                            how = 'outer')
-    
+
     artists_new.loc[(artists_new['exitCount_x']).isnull() == True, \
                                 'exitCount_x'] = 0
     artists_new.loc[(artists_new['isActive_y']) == 1, \
@@ -181,7 +181,7 @@ def process_artistparticipation(data_dir):
 
     artists_coverge = pd.merge(artists_df, artists_new, on = 'artist')
     artists_coverge = pd.merge(bands_df, artists_coverge, on='band')
-    
+
     artists_participation = artists_coverge[['id_x', 'id_y', 'isActive_x', 'exitCount_x']]
     artists_participation.columns = ['id_x', 'id_y','isActive','exitCount']
 
