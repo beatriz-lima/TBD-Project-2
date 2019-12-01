@@ -11,7 +11,7 @@ def load_or_make_df(path, process_function):
     return pd.read_csv(path)
 
 
-def process_bands(data_dir):
+def process_bands(data_dir, constitution):
     band_name = pd.read_csv(os.path.join(data_dir, 'band-band_name.csv'))
     band_start_end = pd.read_csv(os.path.join(data_dir, 'band-start_year-end_year.csv'))
 
@@ -33,11 +33,14 @@ def process_bands(data_dir):
     bands_df["start"] = bands_df.start.apply(dateFix)
     bands_df["end"] = bands_df.end.apply(dateFix)
 
+
+    bands_df.columns = ['id', 'dbpedia', 'name', 'start', 'end']
+
     #Save the result DataFrame into a new csv file
     bands_df.to_csv(os.path.join(data_dir, 'bands_processed.csv'), index=False)
 
 
-def process_albums(data_dir):
+def process_albums(data_dir, constitution):
     #Condição que verifica se já existe a tabela bands_df.
     #Se não existir, criar
     bands_df = load_or_make_df(
@@ -48,53 +51,88 @@ def process_albums(data_dir):
     #Get the required csv files to DataFrame
     band_album = pd.read_csv(os.path.join(data_dir, 'band-album_data.csv'))
     band_album_genre = pd.read_csv(os.path.join(data_dir, 'band-album_data_genre.csv'))
+    #band_album_genre.columns = ['dbpedia', 'album_name', 'release_date', 'abstract', 'duration', 'sold']
 
-    albums_df = pd.merge(band_album, bands_df, on='band', how='outer')
+    band_album.columns = ['dbpedia', 'album_name', 'release_date', 'abstract', 'duration', 'sold']
+    band_album_genre.columns = ['dbpedia', 'album', 'album_name', 'genre', 'release_date', 'abstract',
+       'duration', 'sold']
 
-    albums_df_all = pd.merge(albums_df, band_album_genre, on=['band', 'release_date', 'duration', 'album_name'])
-
-    #https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.drop_duplicates.html
-    albums_df = albums_df_all.drop_duplicates(subset=['album','duration', 'release_date'])
-
-    #Select which columns to save and change the column names
-    albums_df = albums_df[['album','id','album_name','release_date','duration','sold_x','abstract_x']]
-    albums_df.columns = ['URI','bandID','name','release', 'duration', 'sold', 'abstract'] #Está repetido e desnecessário
-
-    #Get arrays of sales, launchDate, durations
-    albums_launchDate = albums_df.groupby(['URI']).release.unique().apply(lambda x: x.tolist()).reset_index()
-    albums_sold = albums_df.groupby(['URI']).sold.unique().apply(lambda x: x.tolist()).reset_index()
-    albums_duration = albums_df.groupby(['URI']).duration.unique().apply(lambda x: x.tolist()).reset_index()
-
-    #Merge and choose columns
-    albums_df_temp = pd.merge(pd.merge(albums_launchDate,albums_sold),albums_duration)
-    albums_df = pd.merge(albums_df.drop_duplicates('URI'), albums_df_temp, suffixes=['_noArray','_array'], on='URI')
-    albums_df = albums_df[['URI','bandID','name','release_array', 'duration_array', 'sold_array', 'abstract']]
-
-    albums_df['id'] = np.arange(1, len(albums_df) + 1)
-    cols = albums_df.columns.tolist()
-    cols = cols[-1:] + cols[:-1]
-    albums_df = albums_df[cols]
-
-    def fix_sales(x):
-        if isinstance(x, int):
-            return x
-        if isinstance(x, str) and "rowspan" in x:
-            return int(re.findall(r"[0-9,0-9]+", x)[-1].replace(",", ""))
-        else:
-            return x
-
-    _fix_sales = lambda x: list(map(fix_sales, x))
-    albums_df["sold_array"] = albums_df["sold_array"].apply(_fix_sales)
+    albums_df = pd.merge(band_album, bands_df, on='dbpedia', how='outer')
+    albums_df = albums_df.drop_duplicates(subset=['album_name', 'id'])
+    albums_df['albumId'] = np.arange(1, len(albums_df) + 1)
 
 
-    albums_df.columns = ['dbpedia','bandID','name','release', 'duration', 'sold', 'abstract']
-    albums_df = albums_df[["name", "dbpedia", "sold", "duration", "abstract"]]
+    #album_df : 
+    albums_df_all = pd.merge(albums_df, band_album_genre, on=['dbpedia', 'album_name'])
+    albums_df_all['album_name'] =  albums_df_all.album_name.apply(lambda row: row.replace('"', '\"'))
+    fixGenre = lambda row: row.split("/")[-1].replace("_", " ")
+    albums_df_all['genre'] = albums_df_all.genre.apply(fixGenre)
+
+    #Album data
+    albums_df = albums_df_all.drop_duplicates(subset=['albumId'])[['albumId','album_name', 'album']]
+    albums_df.columns = ['id','name','dbpedia']
+
+    #Album band association data
+    albums_bands = albums_df_all.drop_duplicates(subset=['album'])[['id','albumId']]
+    albums_bands.columns = ['bands','albums']
+
+    #Genre data
+    genres_df = pd.DataFrame({'genre': albums_df_all['genre'].unique(), 'id': np.arange(1, len(albums_df_all['genre'].unique())+1)})
+
+    #Album Genre association data
+    albums_genres = albums_df_all.drop_duplicates(subset=['album', 'genre'])[['albumId', 'genre']]
+    albums_genres = pd.merge(albums_genres, genres_df, on = 'genre')[['albumId','id']]
+    
+    albums_genres.columns = ['albums','genres']
+
+    
 
 
-    albums_df.to_csv(os.path.join(data_dir, 'albums_processedNOSQL.csv'), index=False)
+    albums_df.to_csv(os.path.join(data_dir, 'albums_processed.csv'), index=False)
+    albums_bands.to_csv(os.path.join(data_dir, 'albums_bands_processed.csv'), index=False)
+    albums_genres.to_csv(os.path.join(data_dir, 'albums_genres_processed.csv'), index=False)
+    genres_df.to_csv(os.path.join(data_dir, 'genres_processed.csv'), index=False)
+
+    # #Get arrays of sales, launchDate, durations
+    # albums_launchDate = albums_df.groupby(['URI']).release.unique().apply(lambda x: x.tolist()).reset_index()
+    # albums_sold = albums_df.groupby(['URI']).sold.unique().apply(lambda x: x.tolist()).reset_index()
+    # albums_duration = albums_df.groupby(['URI']).duration.unique().apply(lambda x: x.tolist()).reset_index()
+
+    # #Merge and choose columns
+    # albums_df_temp = pd.merge(pd.merge(albums_launchDate,albums_sold),albums_duration)
+    # albums_df = pd.merge(albums_df.drop_duplicates('URI'), albums_df_temp, suffixes=['_noArray','_array'], on='URI')
+    # albums_df = albums_df[['URI','bandID','name','release_array', 'duration_array', 'sold_array', 'abstract']]
+
+    # albums_df['id'] = np.arange(1, len(albums_df) + 1)
+    # cols = albums_df.columns.tolist()
+    # cols = cols[-1:] + cols[:-1]
+    # albums_df = albums_df[cols]
+
+    # def fix_sales(x):
+    #     if isinstance(x, int):
+    #         return x
+    #     if isinstance(x, str) and "rowspan" in x:
+    #         return int(re.findall(r"[0-9,0-9]+", x)[-1].replace(",", ""))
+    #     else:
+    #         return x
+
+    # _fix_sales = lambda x: list(map(fix_sales, x))
+    # albums_df["sold_array"] = albums_df["sold_array"].apply(_fix_sales)
+
+    # albums_df.columns = ['id', 'dbpedia','bandID','name','release', 'duration', 'sold', 'abstract']
+    # #This is required since the names are not correct
+
+    # album_band_association_df = albums_df[['id', 'bandID', 'dbpedia']]
+
+    # albums_df = albums_df[['id'] + constitution]
 
 
-def process_albumgenre(data_dir):
+    # albums_df.to_csv(os.path.join(data_dir, 'albums_processed.csv'), index=False)
+    # album_band_association_df.to_csv(os.path.join(data_dir, 'albums_bands_processed.csv'), index=False)
+
+
+
+def process_albumgenre(data_dir, constitution):
     #Get the required csv file to DataFrame
     band_album_genre = pd.read_csv(os.path.join(data_dir, 'band-album_data_genre.csv'))
     band_album = pd.read_csv(os.path.join(data_dir, 'band-album_data.csv'))
@@ -108,17 +146,34 @@ def process_albumgenre(data_dir):
         process_albums,
     )
 
-    albums_df = pd.merge(band_album, bands_df, on='band', how='outer')
-    albums_df_all = pd.merge(albums_df, band_album_genre, on=['band', 'release_date', 'duration', 'album_name'])
+    print(albums_df.iloc[0:1])
+    print(bands_df.iloc[0:1])
+    print(band_album_genre.iloc[0:1])
+    print(band_album.iloc[0:1])
+    print("----------------------------------------------------------")
 
-    albums_df = pd.read_csv(os.path.join(data_dir, 'albums_processed.csv'))
-    albums_df_genre = albums_df_all[['id','album', 'genre', 'album_name']]
-    albums_df_genre.columns = ['bandID', 'URI', 'genre', 'name']
-    albums_genre = pd.merge(albums_df_genre, albums_df, on=['URI','bandID', 'name'])
+
+    band_album_genre.columns = ['dbpedia', 'album', 'album_name', 'genre', 'release_date', 'abstract',
+       'duration', 'sold']
+    band_album.columns = ['dbpedia', 'album_name', 'release_date', 'abstract', 'duration', 'sold']
+
+    albums_df = pd.merge(band_album, bands_df, on='dbpedia', how='outer')
+    albums_df_all = pd.merge(albums_df, band_album_genre, on=['dbpedia', 'release_date', 'duration', 'album_name'])
+
+
+    albums_df = pd.read_csv(os.path.join(data_dir, 'albums_bands_processed.csv'))
+    albums_df_genre = albums_df_all[['id','dbpedia', 'album', 'genre', 'album_name']]
+    
+
+    
+    albums_df_genre.columns = ['bandID', 'dbpedia', 'genre', 'name']
+
+    albums_genre = pd.merge(albums_df_genre, albums_df, on=['dbpedia','bandID', 'name'])
 
     albums_genre = albums_genre.drop_duplicates()
     albums_genre = albums_genre[['id','bandID','genre']]
-    albums_genre.columns = ['albumID','bandID','genre']
+    print(albums_genre.iloc[0:1])
+    albums_genre.columns = ['albumID','bandID','name']
 
     fixGenre = lambda row: row.split("/")[-1].replace("_", " ")
 
@@ -126,10 +181,14 @@ def process_albumgenre(data_dir):
 
     albums_genre = albums_genre.drop_duplicates()
 
-    albums_genre.to_csv(os.path.join(data_dir, 'albumgenre_processed.csv'), index=False)
+    album_genre_association = album_genre_association[['albumID','genre']]
+    albums_genre = album_genre[constitution]
+
+    albums_genre.to_csv(os.path.join(data_dir, 'albumgenre_processed.csv'), index=True)
+    album_genre_association.to_csv(os.path.join(data_dir, 'albums_genre_processed.csv'), index=True)
 
 
-def process_artists(data_dir):
+def process_artists(data_dir, constitution):
     artists_1 = pd.read_csv(os.path.join(data_dir, 'band-member-member_name.csv'))
     artists_2 = pd.read_csv(os.path.join(data_dir, 'band-former_member-member_name.csv'))
 
@@ -141,7 +200,9 @@ def process_artists(data_dir):
     artists_df['id'] = np.arange(1, len(artists_df)+1)
     cols = artists_df.columns.tolist()
     cols = cols[-1:] + cols[:-1]
+
     artists_df = artists_df[cols]
+    artists_df.columns = ['id', 'dbpedia','name']
 
     artists_df.to_csv(os.path.join(data_dir, 'artists_processed.csv'), index=False)
 
@@ -186,4 +247,4 @@ def process_artistparticipation(data_dir):
     artists_participation.columns = ['id_x', 'id_y','isActive','exitCount']
 
     artists_participation.to_csv(os.path.join(data_dir, 'artistparticipation_processed.csv'), \
-                                 index=False)
+                                 index=True)
