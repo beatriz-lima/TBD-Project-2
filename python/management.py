@@ -46,7 +46,6 @@ def create():
     LINKS = [['BANDS','ALBUMS', 'madeAlbum'], ['ALBUMS','GENRES', 'isGenre'],['BANDS','ARTISTS','participatesIn']]
     with click.progressbar(KINDS, label='Loading nodes') as bar:
         for kind in bar:
-            start = time.time()
             path = os.path.join(data_dir, f"{kind.lower()}_processed.csv")
             constitution = globals().get(f'{kind}_LIST')
 
