@@ -1,5 +1,4 @@
 *.pyc
-volumes/*
 .vscode/*
 .DS_Store
 .python-version
