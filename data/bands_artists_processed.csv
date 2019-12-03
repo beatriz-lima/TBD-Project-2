@@ -1,4 +1,4 @@
-id_x,id_y,isActive,exitCount
+bands,artists,isActive,exitCount
 1,2566,1.0,0.0
 1,10611,0.0,1.0
 5,1487,0.0,1.0
