@@ -11,7 +11,7 @@ def load_or_make_df(path, process_function):
     return pd.read_csv(path)
 
 
-def process_bands(data_dir, constitution):
+def process_bands(data_dir):
     band_name = pd.read_csv(os.path.join(data_dir, 'band-band_name.csv'))
     band_start_end = pd.read_csv(os.path.join(data_dir, 'band-start_year-end_year.csv'))
 
@@ -40,7 +40,7 @@ def process_bands(data_dir, constitution):
     bands_df.to_csv(os.path.join(data_dir, 'bands_processed.csv'), index=False)
 
 
-def process_albums(data_dir, constitution):
+def process_albums(data_dir):
     #Condição que verifica se já existe a tabela bands_df.
     #Se não existir, criar
     bands_df = load_or_make_df(
@@ -64,7 +64,7 @@ def process_albums(data_dir, constitution):
 
     #album_df : 
     albums_df_all = pd.merge(albums_df, band_album_genre, on=['dbpedia', 'album_name'])
-    albums_df_all['album_name'] =  albums_df_all.album_name.apply(lambda row: row.replace('"', '\"'))
+    albums_df_all['album_name'] =  albums_df_all.album_name.apply(lambda row: ' '.join([re.sub('[^A-Za-z0-9]+', '', k) for k in row.split(' ')]))
     fixGenre = lambda row: row.split("/")[-1].replace("_", " ")
     albums_df_all['genre'] = albums_df_all.genre.apply(fixGenre)
 
@@ -89,9 +89,9 @@ def process_albums(data_dir, constitution):
 
 
     albums_df.to_csv(os.path.join(data_dir, 'albums_processed.csv'), index=False)
-    albums_bands.to_csv(os.path.join(data_dir, 'albums_bands_processed.csv'), index=False)
+    albums_bands.to_csv(os.path.join(data_dir, 'bands_albums_processed.csv'), index=False)
     albums_genres.to_csv(os.path.join(data_dir, 'albums_genres_processed.csv'), index=False)
-    genres_df.to_csv(os.path.join(data_dir, 'genres_processed.csv'), index=False)
+    genres_df[['id','genre']].to_csv(os.path.join(data_dir, 'genres_processed.csv'), index=False)
 
     # #Get arrays of sales, launchDate, durations
     # albums_launchDate = albums_df.groupby(['URI']).release.unique().apply(lambda x: x.tolist()).reset_index()
@@ -184,18 +184,19 @@ def process_albumgenre(data_dir, constitution):
     album_genre_association = album_genre_association[['albumID','genre']]
     albums_genre = album_genre[constitution]
 
-    albums_genre.to_csv(os.path.join(data_dir, 'albumgenre_processed.csv'), index=True)
     album_genre_association.to_csv(os.path.join(data_dir, 'albums_genre_processed.csv'), index=True)
 
 
-def process_artists(data_dir, constitution):
+def process_artists(data_dir):
     artists_1 = pd.read_csv(os.path.join(data_dir, 'band-member-member_name.csv'))
     artists_2 = pd.read_csv(os.path.join(data_dir, 'band-former_member-member_name.csv'))
 
     artists = pd.concat((artists_1,artists_2))[['artist','name']]
     artists = artists.drop_duplicates(subset=['artist','name'])
 
-    artists_df = artists.groupby('artist').name.unique().apply(lambda x: x.tolist()).reset_index()
+    artists['name'] = artists.name.apply(lambda row: ' '.join([re.sub('[^A-Za-z0-9]+', '', k) for k in str(row).split(' ')]))
+
+    artists_df = artists.groupby('artist').name.unique().apply(lambda x: ";".join(filter(lambda y: type(y) == str, x.tolist()))).reset_index()
 
     artists_df['id'] = np.arange(1, len(artists_df)+1)
     cols = artists_df.columns.tolist()
@@ -240,11 +241,12 @@ def process_artistparticipation(data_dir):
     artists_new.loc[(artists_new['isActive_y']) == 1, \
                                 'isActive_x'] = 1
 
-    artists_coverge = pd.merge(artists_df, artists_new, on = 'artist')
-    artists_coverge = pd.merge(bands_df, artists_coverge, on='band')
+    artists_new.columns = ['dbpedia', 'band', 'exitCount_x', 'isActive_x', 'exitCount_y', 'isActive_y']
+    artists_coverge = pd.merge(artists_df, artists_new, on = 'dbpedia')
+    artists_coverge = pd.merge(bands_df, artists_coverge, left_on = 'dbpedia', right_on='band')
 
     artists_participation = artists_coverge[['id_x', 'id_y', 'isActive_x', 'exitCount_x']]
-    artists_participation.columns = ['id_x', 'id_y','isActive','exitCount']
+    artists_participation.columns = ['bands', 'artists','isActive','exitCount']
 
-    artists_participation.to_csv(os.path.join(data_dir, 'artistparticipation_processed.csv'), \
-                                 index=True)
+    artists_participation.to_csv(os.path.join(data_dir, 'bands_artists_processed.csv'), \
+                                 index=False)
