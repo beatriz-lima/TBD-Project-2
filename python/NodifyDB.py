@@ -1,5 +1,7 @@
+import math
+
 def helperWrite(value):
-    if type(value) == int or type(value) == float:
+    if (type(value) == int or type(value) == float) and not math.isnan(value):
         return value
     else:
         return f'"{value}"'
@@ -40,15 +42,15 @@ def createLinkage(connection, link, kiaNodeA, kiaNodeB, attributes=None, meaning
     nodeB = f'->(b)'
 
     create = "CREATE " if oneInstance else ""
-    
+
     string = f'MATCH (a:{link[0]}),(b:{link[1]}) WHERE a.id = {kiaNodeA} AND b.id = {kiaNodeB} '
 
     if attributes is not None and meaning is not None and (len(attributes) == len(meaning)):
         builder = ', '.join([f'{attributes[i]}: {helperWrite(meaning[i])}' for i in range(0, len(attributes))])
         query = string + create + nodeA + f'[r:{link[2]}' + ' {' + builder + '}]' + nodeB
-        print(query)
     else:
         query = string + create + nodeA + f'[r:{link[2]}]' + nodeB
+
     connection.run(query)
     connection.commit()
 

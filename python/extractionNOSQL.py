@@ -29,7 +29,10 @@ def process_bands(data_dir):
     cols = cols[-1:] + cols[:-1]
     bands_df = bands_df[cols]
     dateFix = lambda x: x if (isinstance(x, float) or x.isdigit()) else ""
+    nameFix = lambda x: x.replace('"', "'") if (isinstance(x, str)) else ""
 
+    bands_df["band"] = bands_df.band.apply(nameFix)
+    bands_df["bandname"] = bands_df.bandname.apply(nameFix)
     bands_df["start"] = bands_df.start.apply(dateFix)
     bands_df["end"] = bands_df.end.apply(dateFix)
 
@@ -62,7 +65,7 @@ def process_albums(data_dir):
     albums_df['albumId'] = np.arange(1, len(albums_df) + 1)
 
 
-    #album_df : 
+    #album_df :
     albums_df_all = pd.merge(albums_df, band_album_genre, on=['dbpedia', 'album_name'])
     albums_df_all['album_name'] =  albums_df_all.album_name.apply(lambda row: ' '.join([re.sub('[^A-Za-z0-9]+', '', k) for k in row.split(' ')]))
     fixGenre = lambda row: row.split("/")[-1].replace("_", " ")
@@ -82,10 +85,10 @@ def process_albums(data_dir):
     #Album Genre association data
     albums_genres = albums_df_all.drop_duplicates(subset=['album', 'genre'])[['albumId', 'genre']]
     albums_genres = pd.merge(albums_genres, genres_df, on = 'genre')[['albumId','id']]
-    
+
     albums_genres.columns = ['albums','genres']
 
-    
+
 
 
     albums_df.to_csv(os.path.join(data_dir, 'albums_processed.csv'), index=False)
@@ -163,9 +166,9 @@ def process_albumgenre(data_dir, constitution):
 
     albums_df = pd.read_csv(os.path.join(data_dir, 'albums_bands_processed.csv'))
     albums_df_genre = albums_df_all[['id','dbpedia', 'album', 'genre', 'album_name']]
-    
 
-    
+
+
     albums_df_genre.columns = ['bandID', 'dbpedia', 'genre', 'name']
 
     albums_genre = pd.merge(albums_df_genre, albums_df, on=['dbpedia','bandID', 'name'])
