@@ -73,6 +73,10 @@ def create():
                     query = "CREATE "
                     buffer = 0
 
+            if buffer:
+                with driver.session() as session:
+                    session.run(query[:-1])
+
     with click.progressbar(LINKS, label='Loading links') as park:
         for link in park:
 
