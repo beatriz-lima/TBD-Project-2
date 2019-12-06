@@ -1,3 +1,4 @@
+import random
 import os
 
 import click
@@ -104,6 +105,30 @@ def create():
     driver.close()
 
 
+@click.command(help="Generate random data for playlists")
+@click.option("--number", type=int, default=25)
+def generate_playlists(number):
+    driver = create_driver()
+
+    with driver.session() as session:
+        num_albums = session.run("MATCH (n:ALBUMS) RETURN count(n)").value()[0]
+        num_playlists = session.run("MATCH (p:PLAYLISTS) RETURN count(p)").value()[0]
+        album_range = list(range(1, num_albums + 1))
+
+        with click.progressbar(length=number, label='Generating playlists') as bar:
+            for _ in range(number):
+                albums = random.sample(
+                    album_range,
+                    random.randrange(10, 50),
+                )
+                session.run("CREATE (PLAYLISTS_" + str(num_playlists) + ":PLAYLISTS {id: " + str(num_playlists) + "})")
+                for album in albums:
+                    session.run(f"MATCH (a:ALBUMS), (p:PLAYLISTS) WHERE a.id = {album} AND p.id = {num_playlists} CREATE (a)-[r:isIn]->(p)")
+
+                num_playlists += 1
+
+
 if __name__ == '__main__':
     cli.add_command(create)
+    cli.add_command(generate_playlists)
     cli()
