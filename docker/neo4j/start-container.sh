@@ -38,7 +38,10 @@ fi
 docker run \
     --publish=7474:7474 \
     --publish=7687:7687 \
+    --name neo4j \
     --volume=$PWD/volumes/neo4j/data:/data \
+    --volume=$PWD/docker/neo4j/plugins:/var/lib/neo4j/plugins \
     --env=NEO4J_dbms_memory_heap_max__size=4G \
+    --env=NEO4J_dbms_security_procedures_unrestricted="algo.*" \
     $extra_options \
     neo4j:3.5
