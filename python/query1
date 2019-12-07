@@ -1,0 +1,9 @@
+MATCH (b1:band)-[:madeAlbum]->(a1:album)-[:isGenre]->(g1:genre)
+WITH b1, collect(id(g1)) AS genre1
+MATCH (b2:band)-[:madeAlbum]->(a2:album)-[:isGenre]->(g2:genre) WHERE b1<>b2
+WITH b1, genre1, b2, collect(id(g2)) AS genre2
+RETURN b1.name AS Band1,
+       b2.name AS Band2,
+       algo.similarity.jaccard(genre1, genre2) AS similarity
+ORDER BY similarity DESC
+LIMIT 10

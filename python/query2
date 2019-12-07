@@ -1,0 +1,14 @@
+// genres that are still trending after a year
+MATCH (y1:year{name:'2010'})<-[:wasCreated]-(a1:album)-[:isGenre]->(g1:genre)
+WITH collect(g1) as genreYear1, size((g1)<-[:isGenre]-(a1:album)) as nrAlbums1
+MATCH (y2:year{name:'2009'})<-[:wasCreated]-(a2:album)-[:isGenre]->(g2:genre)
+WITH genreYear1, nrAlbums1, collect(g2) as genreYear2, size((g2)<-[:isGenre]-(a2:album)) as nrAlbums2
+RETURN genreYear2, nrAlbums2-nrAlbums1
+
+// genres that went out of trend
+MATCH (y1:year{name:'2010'})<-[:wasCreated]-(a1:album)-[:isGenre]->(g1:genre)
+WITH collect(g1) as genreYear1, size((g1)<-[:isGenre]-(a1:album)) as nrAlbums1
+MATCH (y2:year{name:'2009'})<-[:wasCreated]-(a2:album)-[:isGenre]->(g2:genre)
+WITH genreYear1, nrAlbums1, collect(g2) as genreYear2, size((g2)<-[:isGenre]-(a2:album)) as nrAlbums2
+RETURN genreYear2, nrAlbums2-nrAlbums1
+
