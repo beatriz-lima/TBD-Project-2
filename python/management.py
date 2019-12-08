@@ -44,7 +44,8 @@ def create():
     driver = create_driver()
     KINDS = ['BANDS', 'ALBUMS', 'ARTISTS', 'GENRES']
 
-    LINKS = [['BANDS','ALBUMS', 'madeAlbum'], ['ALBUMS','GENRES', 'isGenre'],['BANDS','ARTISTS','participatesIn']]
+    LINKS = [['BANDS','ALBUMS', 'madeAlbum'], ['ALBUMS','GENRES', 'isGenre'],['BANDS','ARTISTS','participatesIn'], ['GENRES', 'GENRES', 'derivativeOf']]
+
     with click.progressbar(KINDS, label='Loading nodes') as bar:
         for kind in bar:
             path = os.path.join(data_dir, f"{kind.lower()}_processed.csv")
@@ -82,10 +83,12 @@ def create():
         for link in park:
 
             path = os.path.join(data_dir, f"{link[0].lower()}_{link[1].lower()}_processed.csv")
-            attributes = globals().get(f'{link[0]}_{link[1]}_LIST')
+            attributes = globals().get(f'{link[0]}_{link[1]}_LIST', None)
 
             if not os.path.exists(path):
-                if (link[0] == "BANDS" and link[1] == "ALBUMS") or (link[0] == "ALBUMS" and link[1] == "GENRES"):
+                if link[0] == "GENRES" and link[1] == "GENRES":
+                    getattr(extractionNOSQL, "process_genre_derivatives")(data_dir)
+                elif (link[0] == "BANDS" and link[1] == "ALBUMS") or (link[0] == "ALBUMS" and link[1] == "GENRES"):
                     getattr(extractionNOSQL, f"process_albums")(data_dir)
                 else:
                     getattr(extractionNOSQL, f"process_artistparticipation")(data_dir)

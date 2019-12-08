@@ -11,6 +11,24 @@ def load_or_make_df(path, process_function):
     return pd.read_csv(path)
 
 
+def process_genre_derivatives(data_dir):
+    genres_df = pd.read_csv(os.path.join(data_dir, "genres_processed.csv"))
+    derivatives_df = pd.read_csv(os.path.join(data_dir, "genres_derivatives.csv"))
+    data = dict(id1=[], id2=[])
+
+    for idx, row in derivatives_df.iterrows():
+        genre_1 = genres_df[genres_df["genre"] == row["name1"]]
+        genre_2 = genres_df[genres_df["genre"] == row["name2"]]
+
+        if not genre_1.empty and not genre_2.empty:
+            data["id1"].append(int(genre_1["id"]))
+            data["id2"].append(int(genre_2["id"]))
+
+    final_derivatives = pd.DataFrame(data)
+
+    final_derivatives.to_csv(os.path.join(data_dir, "genres_genres_processed.csv"), index=False)
+
+
 def process_bands(data_dir):
     band_name = pd.read_csv(os.path.join(data_dir, 'band-band_name.csv'))
     band_start_end = pd.read_csv(os.path.join(data_dir, 'band-start_year-end_year.csv'))
