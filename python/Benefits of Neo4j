@@ -1,0 +1,2 @@
+Neo4j is very agile so you can add and remove properties on nodes as necessary.  
+You don't need to define upfront a schema which applies to all Albums nodes in the graph for example.
