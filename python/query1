@@ -3,9 +3,9 @@ MATCH (b1:BANDS)-[:madeAlbum]->(a:ALBUMS)
 WITH b1, count(*) AS numAlbuns
 ORDER BY numAlbuns DESC
 LIMIT 1 
-WITH b1.name AS famousband
+WITH b1.id AS famousband
 // Bands more similar to Beatles
-MATCH (b1:BANDS{name:famousband})-[:madeAlbum]->(a1:ALBUMS)-[:isGenre]->(g1:GENRES)
+MATCH (b1:BANDS{id:famousband})-[:madeAlbum]->(a1:ALBUMS)-[:isGenre]->(g1:GENRES)
 WITH b1, collect(distinct(id(g1))) AS genre1
 MATCH (b2:BANDS)-[:madeAlbum]->(a2:ALBUMS)-[:isGenre]->(g2:GENRES)
 WITH b1, genre1, b2, collect(distinct(id(g2))) AS genre2
