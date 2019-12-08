@@ -1,9 +1,28 @@
-MATCH (b1:BANDS)-[:madeAlbum]->(a1:ALBUMS)-[:isGenre]->(g1:GENRES)
-WITH b1, collect(id(g1)) AS genre1
-MATCH (b2:BANDS)-[:madeAlbum]->(a2:ALBUMS)-[:isGenre]->(g2:GENRES) WHERE b1<>b2
-WITH b1, genre1, b2, collect(id(g2)) AS genre2
+// Compute famousband (band with more albums)
+MATCH (b1:BANDS)-[:madeAlbum]->(a:ALBUMS)
+WITH b1, count(*) AS numAlbuns
+ORDER BY numAlbuns DESC
+LIMIT 1 
+WITH b1.name AS famousband
+// Bands more similar to Beatles
+MATCH (b1:BANDS{name:famousband})-[:madeAlbum]->(a1:ALBUMS)-[:isGenre]->(g1:GENRES)
+WITH b1, collect(distinct(id(g1))) AS genre1
+MATCH (b2:BANDS)-[:madeAlbum]->(a2:ALBUMS)-[:isGenre]->(g2:GENRES)
+WITH b1, genre1, b2, collect(distinct(id(g2))) AS genre2
 RETURN b1.name AS Band1,
        b2.name AS Band2,
        algo.similarity.jaccard(genre1, genre2) AS similarity
 ORDER BY similarity DESC
 LIMIT 10
+
+// Bands less similar to Beatles
+MATCH (b1:BANDS{name:famousband})-[:madeAlbum]->(a1:ALBUMS)-[:isGenre]->(g1:GENRES)
+WITH b1, collect(distinct(id(g1))) AS genre1
+MATCH (b2:BANDS)-[:madeAlbum]->(a2:ALBUMS)-[:isGenre]->(g2:GENRES)
+WITH b1, genre1, b2, collect(distinct(id(g2))) AS genre2
+RETURN b1.name AS Band1,
+       b2.name AS Band2,
+       algo.similarity.jaccard(genre1, genre2) AS similarity
+ORDER BY similarity ASC
+LIMIT 20
+
