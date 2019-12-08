@@ -13,6 +13,7 @@ BANDS_LIST = ["id", "dbpedia", "name", "start", "end"]
 ALBUMS_LIST = ["id", "name", "dbpedia"]
 ARTISTS_LIST = ["id", "dbpedia", "name"]
 GENRES_LIST = ["id", 'name']
+YEAR_LIST = ['id', 'name']
 
 BANDS_ARTISTS_LIST = ['isActive','exitCount']
 
@@ -42,9 +43,9 @@ def cli():
 def create():
     data_dir = get_data_dir()
     driver = create_driver()
-    KINDS = ['BANDS', 'ALBUMS', 'ARTISTS', 'GENRES']
+    KINDS = ['BANDS', 'ALBUMS', 'ARTISTS', 'GENRES', 'YEAR']
 
-    LINKS = [['BANDS','ALBUMS', 'madeAlbum'], ['ALBUMS','GENRES', 'isGenre'],['BANDS','ARTISTS','participatesIn'], ['GENRES', 'GENRES', 'derivativeOf']]
+    LINKS = [['BANDS','ALBUMS', 'madeAlbum'], ['ALBUMS','GENRES', 'isGenre'],['BANDS','ARTISTS','participatesIn'], ['GENRES', 'GENRES', 'derivativeOf'], ['ALBUMS', 'YEAR', 'releasedIn']]
 
     with click.progressbar(KINDS, label='Loading nodes') as bar:
         for kind in bar:
@@ -88,6 +89,8 @@ def create():
             if not os.path.exists(path):
                 if link[0] == "GENRES" and link[1] == "GENRES":
                     getattr(extractionNOSQL, "process_genre_derivatives")(data_dir)
+                elif link[0] == "ALBUMS" and link[1] == "YEAR":
+                    getattr(extractionNOSQL, "process_albums_year")(data_dir)
                 elif (link[0] == "BANDS" and link[1] == "ALBUMS") or (link[0] == "ALBUMS" and link[1] == "GENRES"):
                     getattr(extractionNOSQL, f"process_albums")(data_dir)
                 else:

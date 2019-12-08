@@ -1,3 +1,4 @@
+from datetime import date
 import os
 import re
 
@@ -9,6 +10,46 @@ def load_or_make_df(path, process_function):
     if not os.path.isfile(path):
         process_function(os.path.dirname(path))
     return pd.read_csv(path)
+
+
+def process_year(data_dir):
+    band_album_df = pd.read_csv(os.path.join(data_dir, "band-album_data.csv"))
+    data = dict(id=[], name=[])
+
+    _id = 0
+
+    for idx, row in band_album_df.iterrows():
+        try:
+            year = date.fromisoformat(row['release_date']).year
+            if year not in data['name']:
+                data['id'].append(_id)
+                data['name'].append(year)
+                _id += 1
+        except:
+            pass
+
+    year_df = pd.DataFrame(data)
+    year_df.to_csv(os.path.join(data_dir, "year_processed.csv"), index=False)
+
+
+def process_albums_year(data_dir):
+    band_album_df = pd.read_csv(os.path.join(data_dir, "band-album_data.csv"))
+    year_df = pd.read_csv(os.path.join(data_dir, "year_processed.csv"))
+    albums_df = pd.read_csv(os.path.join(data_dir, "albums_processed.csv"))
+    data = dict(album_id=[], year_id=[])
+
+    for idx, row in band_album_df.iterrows():
+        try:
+            album_name = ' '.join(re.sub('[^A-Za-z0-9]+', '', w) for w in row['album_name'].split())
+            album = albums_df[albums_df['name'] == album_name]
+            year = year_df[year_df['name'] == date.fromisoformat(row['release_date']).year]
+            data['album_id'].append(int(album['id']))
+            data['year_id'].append(int(year['id']))
+        except:
+            pass
+
+    albums_year_df = pd.DataFrame(data)
+    albums_year_df.to_csv(os.path.join(data_dir, "albums_year_processed.csv"), index=False)
 
 
 def process_genre_derivatives(data_dir):
