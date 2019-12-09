@@ -16,7 +16,7 @@ ORDER BY similarity DESC
 LIMIT 10
 
 // Bands less similar to Beatles
-MATCH (b1:BANDS{name:famousband})-[:madeAlbum]->(a1:ALBUMS)-[:isGenre]->(g1:GENRES)
+MATCH (b1:BANDS{id:famousband})-[:madeAlbum]->(a1:ALBUMS)-[:isGenre]->(g1:GENRES)
 WITH b1, collect(distinct(id(g1))) AS genre1
 MATCH (b2:BANDS)-[:madeAlbum]->(a2:ALBUMS)-[:isGenre]->(g2:GENRES)
 WITH b1, genre1, b2, collect(distinct(id(g2))) AS genre2
