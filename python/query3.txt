@@ -1,0 +1,6 @@
+MATCH (y1:YEAR{name:2010})<-[:releasedIn]-(:ALBUMS)-[:isGenre]->(g1:GENRES)
+WITH g1, collect(distinct(g1)) as genreYear1, count(*) AS nrAlbums1
+MATCH (y2:YEAR{name:2009})<-[:releasedIn]-(:ALBUMS)-[:isGenre]->(g2:GENRES)
+WITH  g1, nrAlbums1, collect(distinct(g2)) as genreYear2, count(g2) AS nrAlbums2
+RETURN g1.name, nrAlbums1, nrAlbums2, (nrAlbums1-nrAlbums2)/nrAlbums2 AS GrowthRate
+LIMIT 10

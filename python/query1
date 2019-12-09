@@ -25,4 +25,3 @@ RETURN b1.name AS Band1,
        algo.similarity.jaccard(genre1, genre2) AS similarity
 ORDER BY similarity ASC
 LIMIT 20
-
